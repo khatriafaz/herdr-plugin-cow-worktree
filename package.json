@@ -1,0 +1,22 @@
+{
+  "name": "herdr-plugin-cow-worktree",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Strict copy-on-write Git worktrees for Herdr",
+  "type": "module",
+  "engines": { "node": ">=20.1" },
+  "scripts": {
+    "install": "node scripts/build-native.mjs",
+    "build:native": "node scripts/build-native.mjs",
+    "build:ts": "tsc -p tsconfig.json",
+    "build": "npm run build:native && npm run build:ts",
+    "test": "vitest run",
+    "test:live": "node scripts/live-test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "node-gyp": "^11.4.2",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

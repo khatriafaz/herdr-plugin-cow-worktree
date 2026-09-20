@@ -1,0 +1,26 @@
+id = "dev.afaz.cow-worktree"
+name = "CoW Worktree"
+version = "0.1.0"
+min_herdr_version = "0.9.1"
+description = "Create strict copy-on-write Git worktrees including ignored local files"
+platforms = ["linux", "macos"]
+
+[[build]]
+command = ["npm", "ci"]
+
+[[build]]
+command = ["npm", "run", "build"]
+
+[[actions]]
+id = "create"
+title = "Create CoW worktree"
+contexts = ["workspace"]
+command = ["node", "dist/action.js"]
+
+[[panes]]
+id = "creator"
+title = "Create CoW worktree"
+placement = "popup"
+width = "72%"
+height = 18
+command = ["node", "dist/creator.js"]
