@@ -29,7 +29,8 @@ const socketRequest = (socketPath, request) => new Promise((resolve, reject) => 
 
 const root = await mkdtemp(path.join(os.tmpdir(), "cow-worktree-live-"));
 const source = path.join(root, "primary");
-const destination = path.join(root, "worktrees", "live-cow");
+const configPath = path.join(root, "herdr-config.toml");
+let destination;
 let parentWorkspace;
 let childWorkspace;
 let originalWorkspace;
@@ -42,6 +43,7 @@ try {
   await writeFile(path.join(source, "tracked.txt"), "tracked\n");
   await writeFile(path.join(source, ".env"), "LIVE_SECRET=test-only\n", { mode: 0o600 });
   await writeFile(path.join(source, "node_modules", "demo", "index.js"), "export default 1;\n");
+  await writeFile(configPath, `[worktrees]\ndirectory = '${path.join(root, "worktrees")}'\n`);
   await run("git", ["init", "-b", "main"], { cwd: source });
   await run("git", ["config", "user.email", "cow-live@example.invalid"], { cwd: source });
   await run("git", ["config", "user.name", "CoW Live Test"], { cwd: source });
@@ -66,25 +68,17 @@ try {
 
   const creator = spawn(process.execPath, [path.resolve("dist/creator.js")], {
     cwd: path.resolve("."),
-    env: { ...process.env, HERDR_BIN_PATH: herdr, COW_SOURCE_CWD: source },
+    env: { ...process.env, HERDR_BIN_PATH: herdr, HERDR_CONFIG_PATH: configPath, COW_SOURCE_CWD: source },
     stdio: ["pipe", "pipe", "pipe"],
   });
   let stdout = "";
   let stderr = "";
-  let promptStep = 0;
+  let confirmed = false;
   creator.stdout.on("data", (chunk) => {
     stdout += chunk;
-    if (promptStep === 0 && stdout.includes("Branch [")) {
-      promptStep = 1;
-      creator.stdin.write("live-cow\n");
-    }
-    if (promptStep === 1 && stdout.includes("Destination [")) {
-      promptStep = 2;
-      creator.stdin.write(`${destination}\n`);
-    }
-    if (promptStep === 2 && stdout.includes("Continue?")) {
-      promptStep = 3;
-      creator.stdin.end("y\n");
+    if (!confirmed && stdout.includes("Create now?")) {
+      confirmed = true;
+      creator.stdin.end("\n");
     }
   });
   creator.stderr.on("data", (chunk) => { stderr += chunk; });
@@ -93,6 +87,8 @@ try {
     creator.once("close", resolve);
   });
   if (exitCode !== 0) throw new Error(`Creator exited ${exitCode}: ${stderr || stdout}`);
+  destination = stdout.match(/\nCreated \S+ at (.+)\n/)?.[1];
+  if (!destination) throw new Error(`Could not read the generated destination from creator output: ${stdout}`);
 
   const canonicalDestination = await realpath(destination);
   const canonicalSource = await realpath(source);

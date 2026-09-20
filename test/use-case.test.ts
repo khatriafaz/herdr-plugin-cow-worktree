@@ -18,7 +18,7 @@ function dependencies(options: { cloneFailure?: Error; adoptionFailure?: Error; 
     notify: vi.fn(),
   };
   const config = { resolveWorktreeDirectory: vi.fn().mockResolvedValue({ directory: "/trees", configuredRelative: false }) };
-  const prompt = { collect: vi.fn().mockResolvedValue({ branch: "feature", destination: "/trees/feature" }) };
+  const prompt = { confirm: vi.fn() };
   const adapter = {
     platform: "linux", validateCapability: vi.fn(),
     cloneCheckout: options.cloneFailure ? vi.fn().mockRejectedValue(options.cloneFailure)
@@ -26,11 +26,16 @@ function dependencies(options: { cloneFailure?: Error; adoptionFailure?: Error; 
         symlinksCreated: 0, skippedSpecialFiles: [] }),
     cleanup: vi.fn(),
   };
-  const useCase = new CreateCowWorktreeUseCase(git as never, herdr as never, config as never, prompt as never, adapter as never);
+  const useCase = new CreateCowWorktreeUseCase(git as never, herdr as never, config as never, prompt as never,
+    adapter as never, () => "feature");
   return { useCase, git, herdr, adapter, handle };
 }
 
 describe("CreateCowWorktreeUseCase", () => {
+  it("generates short, filesystem-safe branch names", () => {
+    expect(CreateCowWorktreeUseCase.defaultName()).toMatch(/^cow-\d{8}-[0-9a-f]{6}$/);
+  });
+
   it("rolls back Git and adapter resources when cloning fails", async () => {
     const deps = dependencies({ cloneFailure: new Error("no reflink") });
     await expect(deps.useCase.execute("/repo")).rejects.toThrow("no reflink");

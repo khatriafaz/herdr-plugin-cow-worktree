@@ -1,6 +1,6 @@
 id = "dev.afaz.cow-worktree"
 name = "CoW Worktree"
-version = "0.1.0"
+version = "0.1.1"
 min_herdr_version = "0.9.1"
 description = "Create strict copy-on-write Git worktrees including ignored local files"
 platforms = ["linux", "macos"]

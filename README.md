@@ -18,7 +18,7 @@ npm test
 herdr plugin link "$PWD"
 ```
 
-Invoke **Create CoW worktree** from a workspace action menu. The action opens the `creator` popup. You can optionally bind it in `~/.config/herdr/config.toml`:
+Invoke **Create CoW worktree** from a workspace action menu. The action opens the `creator` popup with an automatically generated branch and destination following Herdr's `<worktrees.directory>/<repo>/<branch>` convention. Press Enter to confirm. You can optionally bind it in `~/.config/herdr/config.toml`:
 
 ```toml
 [[keys.command]]
